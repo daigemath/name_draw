@@ -1,6 +1,10 @@
 pip show pyinstaller
 pip install -U pyinstaller==5.9.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+
+
 pyinstaller -F name_draw.py
+
+
 name_draw.exe
 pip install cx_freeze -i https://pypi.tuna.tsinghua.edu.cn/simple
 cxfreeze --target-dir=./dist --target-name=run name_draw.py

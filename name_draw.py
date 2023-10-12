@@ -186,13 +186,22 @@ class Register:
         return True
 
 
-def 合成照片(original_image,file_path,补充):
+def 合成照片(original_image,file_path,补充,自动):
     # 打开原始图片
     #original_image = Image.open("3-整体图【自己提供】.jpg")  # 替换为你的原始图片路径
 
-    叠加行 = int(text_entry叠加行.get())
-    叠加列 = int(text_entry叠加列.get())
-
+    if(自动 == "A3"):
+        #A3画进行裁剪
+        叠加行 = 6
+        叠加列 = 9
+    elif(自动 == "A4"):
+        #A4画进行裁剪 
+        叠加行 = 5
+        叠加列 = 6
+    else:
+        叠加行 = int(text_entry叠加行.get())
+        叠加列 = int(text_entry叠加列.get())
+    
     # 获取原始图片的宽度和高度
     width, height = original_image.size
 
@@ -201,8 +210,11 @@ def 合成照片(original_image,file_path,补充):
     new_height = height * 叠加列
     new_image = Image.new("RGB", (new_width, new_height))
 
-    # 创建一个用于绘制的对象
-    draw = ImageDraw.Draw(new_image)
+    # # 创建一个用于绘制的对象
+    # draw = ImageDraw.Draw(new_image)
+
+    # 创建一个新的图像，使用RGBA模式，其中"A"代表透明度
+    new_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 0))
 
     # 将原始图片复制到新图片的不同位置
     for row in range(叠加列):
@@ -211,10 +223,19 @@ def 合成照片(original_image,file_path,补充):
             y_offset = row * height
             new_image.paste(original_image, (x_offset, y_offset))
 
+    if(自动 == "A3"):
+        #A3画进行裁剪
+        cropped_image = new_image.crop((0, 0, 3508, 4961))
+    elif(自动 == "A4"):
+        #A4画进行裁剪
+        cropped_image = new_image.crop((0, 0, 2479, 3508))
+    else:
+        cropped_image = new_image
+
     # 保存新图片
-    new_image.save(名称处理(file_path,补充))  # 替换为你希望保存的新图片路径
+    cropped_image.save(名称处理(file_path,补充))  # 替换为你希望保存的新图片路径
     进度_label.config(text=f"处理进度：{补充}已经处理完成",font=("Helvetica", 20), fg="red")
-    return new_image
+    return cropped_image
 
 def 分辨率调整到300(original_image):
     # 打开原始图片
@@ -304,7 +325,9 @@ def 手写图处理(original_image,file_path,补充):
     # 创建一个新的画布，用于组合四个部分
     new_width = original_width + (crop_width if original_width % 2 == 1 else 0)  # 调整新画布宽度
     new_height = original_height + (crop_height if original_height % 2 == 1 else 0)  # 调整新画布高度
-    new_image = Image.new("RGB", (new_width, new_height))
+
+    # 创建一个新的图像，使用RGBA模式，其中"A"代表透明度
+    new_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 0))
 
     # 将四个部分重新组合成新的图
     new_image.paste(top_left, (0, 0))
@@ -407,7 +430,39 @@ def step_2():
             # 打开选择的图片
             image = Image.open(file_path)
             #image = 分辨率调整到300(image)
-            image = 合成照片(image,file_path,"【图片叠加】")
+            image = 合成照片(image,file_path,"【图片叠加】","无")
+            # 将图片显示在界面上
+            # 检查图片宽度是否大于100像素
+            if image.width > 500:
+                # 对图片进行缩放，限制宽度为100像素
+                image = image.resize((500, int(image.height * (500 / image.width))))
+            photo = ImageTk.PhotoImage(image)
+            image_label.config(image=photo)
+            image_label.photo = photo
+
+def step_A4():
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png *.jpeg *.gif *.bmp")])
+        if file_path:
+            # 打开选择的图片
+            image = Image.open(file_path)
+            #image = 分辨率调整到300(image)
+            image = 合成照片(image,file_path,"【A4图片叠加】","A4")
+            # 将图片显示在界面上
+            # 检查图片宽度是否大于100像素
+            if image.width > 500:
+                # 对图片进行缩放，限制宽度为100像素
+                image = image.resize((500, int(image.height * (500 / image.width))))
+            photo = ImageTk.PhotoImage(image)
+            image_label.config(image=photo)
+            image_label.photo = photo
+
+def step_A3():
+        file_path = filedialog.askopenfilename(filetypes=[("Image Files", "*.jpg *.png *.jpeg *.gif *.bmp")])
+        if file_path:
+            # 打开选择的图片
+            image = Image.open(file_path)
+            #image = 分辨率调整到300(image)
+            image = 合成照片(image,file_path,"【A3图片叠加】","A3")
             # 将图片显示在界面上
             # 检查图片宽度是否大于100像素
             if image.width > 500:
@@ -526,8 +581,18 @@ text_entry叠加列.insert(0, "6")
 text_label列 = tk.Label(叠加_frame, text="列",width=5,font=("Helvetica", 15), fg="blue")
 text_label列.pack(side=tk.LEFT, padx=10, pady=10)
 
+一键_frame = tk.Frame(window)
+一键_frame.pack(side=tk.TOP,padx=10, pady=10,anchor=tk.W)
+
+button_A3 = tk.Button(一键_frame, text="【一键名字A3叠加处理】", command=step_A3,width=30,font=("Helvetica", 15), fg="black")
+button_A3.pack(side=tk.LEFT,padx=10, pady=10, anchor=tk.W)
+
+button_A4 = tk.Button(一键_frame, text="【一键名字A4叠加处理】", command=step_A4,width=30,font=("Helvetica", 15), fg="black")
+button_A4.pack(side=tk.LEFT,padx=10, pady=10, anchor=tk.W)
+
 皮肤_frame = tk.Frame(window)
 皮肤_frame.pack(side=tk.TOP,padx=10, pady=10,anchor=tk.W)
+
 
 button3 = tk.Button(皮肤_frame, text="第三步【名字皮肤处理】", command=step_3,width=30,font=("Helvetica", 15), fg="black")
 button3.pack(side=tk.LEFT,padx=10, pady=10, anchor=tk.W)
